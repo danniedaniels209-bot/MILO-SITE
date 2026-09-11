@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 150" role="img" aria-label="MILO logo placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7d774"/><stop offset="1" stop-color="#d9a521"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8,8)">
+    <path d="M20 6 H284 a18 18 0 0 1 18 18 v86 a18 18 0 0 1 -18 18 H20 a18 18 0 0 1 -18 -18 V24 a18 18 0 0 1 18 -18 z"
+          fill="#ffffff" stroke="url(#g)" stroke-width="7"/>
+    <rect x="96" y="16" width="112" height="26" rx="6" fill="#d1141b"/>
+    <text x="152" y="35" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="17" fill="#fff" letter-spacing="1">Nestle</text>
+    <text x="152" y="96" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="52" fill="#5a2d0c" letter-spacing="1">MILO</text>
+    <text x="152" y="118" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#9a7b43" letter-spacing="3">PLACEHOLDER</text>
+  </g>
+</svg>

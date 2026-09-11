@@ -1,0 +1,8 @@
+# The 8.57 MB original hero master. Not shipped: index.html points the loop at
+# hero-loop-web.mp4 (6.17 MB, faststart), and loop.js now defaults to it too.
+# Kept on disk as the quality reference, excluded from the deploy to save ~8.5 MB
+# of repo and of every visitor's bandwidth.
+assets/hero-loop.mp4
+
+.DS_Store
+Thumbs.db

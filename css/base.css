@@ -1,0 +1,113 @@
+/* MILO — base layer. Owner: CLAUDE. Tokens, reset, stage, chrome, a11y. */
+:root{
+  --green-deep:#07300f;
+  --green-mid:#0d4a1c;
+  --cream:#f4ecd8;
+  --cream-dim:rgba(244,236,216,.62);
+  --lime:#a9e34b;
+  --lime-bright:#c2f16a;
+  --gold:#e3b23c;
+  --ink:#0a2b10;
+
+  --ease-weight:cubic-bezier(.22,1,.36,1);   /* chocolate: slow out, long settle */
+  --ease-soft:cubic-bezier(.25,.8,.28,1);
+  --fade:280ms;
+
+  --edge-x:clamp(20px,3.6vw,64px);
+  --edge-y:clamp(18px,3vh,40px);
+
+  /* re-theme hook consumed by js/cta.js (it documents these; they were missing) */
+  --cta-lime:#c8e346;
+  --cta-green:#0a3d2c;
+
+  --font-ui:"Helvetica Neue",Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#04200a;overflow:hidden}
+body{font-family:var(--font-ui);color:var(--cream);-webkit-font-smoothing:antialiased}
+img,svg{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* ---------- stage & video layers ---------- */
+.stage{position:fixed;inset:0;overflow:hidden;isolation:isolate;background:#04200a}
+.layer{position:absolute;inset:0;width:100%;height:100%}
+.layer video,.layer--transition{width:100%;height:100%;object-fit:cover;display:block}
+.layer--loop{z-index:1}
+.layer--transition{z-index:2;opacity:0;pointer-events:none;transition:opacity 200ms linear}
+.layer--transition.is-on{opacity:1}
+
+/* faint vignette keeps edge UI legible without covering the film */
+.vignette{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:
+    radial-gradient(120% 85% at 50% 50%,transparent 42%,rgba(0,0,0,.34) 100%),
+    linear-gradient(to bottom,rgba(0,0,0,.42) 0%,transparent 22%,transparent 74%,rgba(0,0,0,.46) 100%);}
+[data-screen="2"] .vignette{
+  background:
+    radial-gradient(120% 85% at 50% 50%,transparent 52%,rgba(60,40,10,.10) 100%),
+    linear-gradient(to bottom,rgba(255,250,235,.55) 0%,transparent 20%,transparent 80%,rgba(255,250,235,.40) 100%);}
+
+.grain{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:.16;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>")}
+
+/* ---------- persistent chrome ---------- */
+.chrome{position:absolute;inset:var(--edge-y) var(--edge-x) auto;z-index:20;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px}
+.chrome__logo{justify-self:start;width:clamp(104px,8.6vw,150px);opacity:.98;
+  /* asset carries ~18% transparent padding, so the box is larger than the mark */
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));transition:filter var(--fade) var(--ease-soft)}
+.chrome__nav{justify-self:center;display:flex;gap:clamp(22px,3.4vw,62px);
+  /* The baked headline rides up behind the nav on short viewports — cream type on
+     cream lettering, then ink type on dark green. A faint blurred ground keeps the
+     nav readable over either without putting a hard box on the film. */
+  padding:9px clamp(16px,1.8vw,26px);border-radius:999px;
+  background:rgba(4,24,10,.46);backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(9px);
+  transition:background var(--fade) var(--ease-soft)}
+.chrome__nav a{position:relative;text-decoration:none;color:var(--cream);
+  font-size:clamp(11px,.95vw,14.5px);letter-spacing:.2em;text-transform:uppercase;font-weight:600;
+  opacity:1;text-shadow:0 2px 10px rgba(0,0,0,.5);
+  transition:opacity 220ms var(--ease-soft),color var(--fade) var(--ease-soft)}
+.chrome__nav a::after{content:"";position:absolute;left:0;right:100%;bottom:-7px;height:1px;
+  background:currentColor;opacity:.85;transition:right 420ms var(--ease-weight)}
+.chrome__nav a:hover{opacity:1}
+.chrome__nav a:hover::after{right:0}
+.burger{justify-self:end;width:40px;height:16px;position:relative}
+.burger span{position:absolute;left:0;right:0;height:2.5px;border-radius:2px;background:var(--cream);
+  box-shadow:0 2px 8px rgba(0,0,0,.45);
+  transition:transform 420ms var(--ease-weight),background var(--fade) var(--ease-soft)}
+.burger span:nth-child(1){top:0}
+.burger span:nth-child(2){bottom:0}
+.burger:hover span:nth-child(1){transform:translateY(2px)}
+.burger:hover span:nth-child(2){transform:translateY(-2px)}
+
+/* screen 2 is cream: flip the chrome to dark or it disappears */
+[data-screen="2"] .chrome__nav{background:rgba(255,249,235,.72)}
+[data-screen="2"] .chrome__nav a,
+[data-screen="2"] .burger span{color:var(--ink)}
+[data-screen="2"] .burger span{background:var(--ink)}
+[data-screen="2"] .chrome__logo{filter:drop-shadow(0 4px 12px rgba(90,70,20,.28))}
+
+/* ---------- screens ---------- */
+.screen{position:absolute;inset:0;z-index:10;pointer-events:none;
+  opacity:0;visibility:hidden;transition:opacity var(--fade) var(--ease-soft),visibility 0s linear var(--fade)}
+.screen.is-active{opacity:1;visibility:visible;transition-delay:0s;pointer-events:none}
+.screen.is-active :where(a,button,[data-hotspot]){pointer-events:auto}
+
+/* every entrance keys off .is-active, never off a video event, so the
+   8s loop can never re-trigger anything. */
+.rise{opacity:0;transform:translateY(14px);
+  transition:opacity 900ms var(--ease-weight),transform 900ms var(--ease-weight)}
+.screen.is-active .rise{opacity:1;transform:none}
+.screen.is-active .rise.d1{transition-delay:120ms}
+.screen.is-active .rise.d2{transition-delay:240ms}
+.screen.is-active .rise.d3{transition-delay:360ms}
+.screen.is-active .rise.d4{transition-delay:480ms}
+.screen.is-active .rise.d5{transition-delay:600ms}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .rise{opacity:1;transform:none}
+}

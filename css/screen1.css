@@ -1,0 +1,65 @@
+/* MILO — screen 1. Owner: CLAUDE.
+   NOTE: the ENERGY THAT RUNS headline, the tin, the debris and the swirl are
+   BAKED INTO THE FILM. Nothing here re-draws them. */
+
+/* Edge captions live in measured-quiet zones (busyness 4–15 across all 192 frames).
+   Default state is label + rule only; supporting copy is revealed on demand
+   (OPENCODE's "caption lenses", approved). */
+.cap{position:absolute;z-index:12;max-width:min(24ch,20vw)}
+.cap__label{font-size:clamp(11px,.92vw,14px);letter-spacing:.22em;text-transform:uppercase;font-weight:600;
+  line-height:1.95;color:var(--cream);opacity:1;text-shadow:0 2px 12px rgba(0,0,0,.62)}
+.cap__rule{width:42px;height:2px;background:var(--lime);opacity:.85;margin-top:13px;
+  transition:width 560ms var(--ease-weight),opacity 360ms var(--ease-soft)}
+.cap__more{margin:11px 0 0;font-size:clamp(11.5px,.86vw,14px);line-height:1.62;
+  color:var(--cream);text-shadow:0 2px 10px rgba(0,0,0,.6);max-height:0;opacity:0;overflow:hidden;
+  transition:max-height 560ms var(--ease-weight),opacity 360ms var(--ease-soft)}
+.cap:hover .cap__rule,.cap:focus-within .cap__rule{width:56px;opacity:.9}
+.cap:hover .cap__more,.cap:focus-within .cap__more{max-height:7em;opacity:1}
+.cap--tl{left:var(--edge-x);top:33%}
+.cap--bl{left:var(--edge-x);bottom:19%}
+.cap--tr{right:var(--edge-x);top:15%;text-align:right}
+.cap--tr .cap__rule{margin-left:auto}
+
+/* Nigeria mark + script line, bottom-right (busyness 5.5) */
+.mark{position:absolute;right:var(--edge-x);bottom:21%;z-index:12;
+  display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:none}
+.mark__map{width:clamp(64px,5.8vw,98px);color:var(--lime);opacity:.8}
+.mark__script{font-style:italic;font-size:clamp(15px,1.5vw,25px);line-height:1.18;
+  text-align:right;color:var(--lime-bright);opacity:.92;letter-spacing:.01em;
+  text-shadow:0 2px 14px rgba(0,0,0,.45)}
+
+/* CTA anchor — bottom centre (busyness 37, five times calmer than the 164 core).
+   The pill itself is OPENCODE's cta.js; this only positions its root. */
+/* CTA — moved from bottom-centre to bottom-right on CODEX's visual QA ruling.
+   Centred put the pill directly over the baked RUNS lettering, which weakened the
+   composition. This is the measured-quietest usable band (busyness 7.8 vs 37).
+   OPENCODE's always-visible label is kept, so discoverability does not regress.
+   To revert: left:50%; translate:-50% 0; and drop the `right` line. */
+.cta-root{position:absolute;right:var(--edge-x);bottom:9%;z-index:15}
+
+@media (max-width:820px){
+  .cap--tl{top:30%}
+  .cap--bl{bottom:25%}
+  .cap{max-width:42vw}
+  .mark{bottom:26%}
+  .mark__script{font-size:15px}
+  .cta-root{bottom:11%;right:50%;translate:50% 0}   /* portrait: back to centre, RUNS is out of frame there */
+}
+@media (max-width:560px){
+  .cap--tr{display:none}           /* right column is the first to crowd on portrait */
+  .mark__map{width:44px}
+}
+
+/* Pause control — bottom-left, busyness 23.9. Required by WCAG 2.2.2 because the
+   hero moves automatically and indefinitely. Deliberately quiet, not a feature. */
+.pause{position:absolute;left:var(--edge-x);bottom:var(--edge-y);z-index:15;
+  display:inline-flex;align-items:center;gap:10px;padding:9px 15px;opacity:.78;
+  border:1px solid rgba(244,236,216,.34);border-radius:999px;
+  background:rgba(4,24,10,.42);backdrop-filter:blur(8px);
+  transition:opacity 320ms var(--ease-soft)}
+.pause:hover,.pause:focus-visible{opacity:.95;outline:none}
+.pause__glyph{width:9px;height:11px;border-left:2.5px solid var(--cream);border-right:2.5px solid var(--cream)}
+.pause.is-paused .pause__glyph{border:0;width:0;height:0;
+  border-left:9px solid var(--cream);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.pause__label{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--cream)}
+@media (max-width:560px){.pause__label{display:none}}

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en" data-screen="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07300f">
+<title>MILO — Energy That Runs</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/screen1.css">
+<link rel="stylesheet" href="css/screen2.css">
+</head>
+<body>
+
+<!-- The headlines "ENERGY THAT RUNS" and "WHAT FUELS YOU?" are burned into the
+     film, so they are invisible to assistive tech and to search. These mirror them. -->
+<h1 class="sr-only">MILO — Energy that runs</h1>
+
+<div class="stage">
+
+  <!-- clip 1, seamless crossfade loop. OPENCODE's loop.js builds the two
+       video elements inside this container. -->
+  <div class="layer layer--loop" id="loopRoot"
+       data-src="assets/hero-loop-web.mp4" data-poster="assets/poster-hero.jpg"></div>
+
+  <!-- the forward / reverse transition plays here, over the loop -->
+  <video class="layer layer--transition" id="tv" muted playsinline preload="none"
+         poster="assets/poster-forward.jpg"></video>
+
+  <div class="vignette"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="chrome">
+    <img class="chrome__logo" id="logo" src="assets/logo.png" alt="MILO"
+         onerror="this.onerror=null;this.src='assets/logo-placeholder.svg'">
+    <nav class="chrome__nav" aria-label="Primary">
+      <a href="#our-story">Our Story</a>
+      <a href="#products">Products</a>
+      <a href="#champions">Champions</a>
+    </nav>
+    <button class="burger" type="button" aria-label="Open menu">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <!-- ============================ SCREEN 1 ============================ -->
+  <section class="screen screen--1 is-active" id="screen1" aria-label="Energy that runs">
+    <div class="cap cap--tl rise d2" tabindex="0">
+      <div class="cap__label">Good<br>nutrition<br>fuels<br>a brighter<br>Nigeria</div>
+      <div class="cap__rule"></div>
+      <p class="cap__more">Cocoa, malt and milk — the three that have powered Nigerian mornings for generations.</p>
+    </div>
+
+    <div class="cap cap--bl rise d3" tabindex="0">
+      <div class="cap__label">More<br>than a drink<br>a brighter<br>tomorrow</div>
+      <div class="cap__rule"></div>
+      <p class="cap__more">Every tin supports grassroots sport in communities across the country.</p>
+    </div>
+
+    <div class="cap cap--tr rise d1" tabindex="0">
+      <div class="cap__label">Nigerian<br>youth<br>go further<br>everyday</div>
+      <div class="cap__rule"></div>
+      <p class="cap__more">From school pitches to national colours — the same green tin at the start of it.</p>
+    </div>
+
+    <div class="mark rise d4">
+      <img class="mark__map" src="assets/nigeria-map.svg" alt="" aria-hidden="true"
+           onerror="this.style.display='none'">
+      <div class="mark__script">Fuelling<br>a Stronger<br>Nigeria</div>
+    </div>
+
+    <!-- WCAG 2.2.2: content that moves automatically for more than five seconds
+         must be pausable. The hero loops forever, so this is a requirement. -->
+    <button class="pause rise d5" id="pauseBtn" type="button" aria-pressed="false">
+      <span class="pause__glyph" aria-hidden="true"></span>
+      <span class="pause__label">Pause motion</span>
+    </button>
+
+    <!-- OPENCODE's beacon pill mounts here -->
+    <div class="cta-root rise d5" id="ctaRoot"></div>
+  </section>
+
+  <!-- ============================ SCREEN 2 ============================ -->
+  <section class="screen screen--2" id="screen2" aria-label="What fuels you">
+    <h2 class="sr-only">What fuels you? A closer look at the ingredients behind the taste.</h2>
+
+    <div class="hot hot--cocoa rise d1" tabindex="0" data-hotspot role="button" aria-label="Cocoa">
+      <p class="hot__copy">A touch of cocoa for that deep, unmistakable chocolate taste.</p>
+    </div>
+    <div class="hot hot--malt rise d2" tabindex="0" data-hotspot role="button" aria-label="Malt">
+      <p class="hot__copy">Barley, carefully malted — where MILO gets its energy and its name.</p>
+    </div>
+
+    <button class="back rise d4" id="backBtn" type="button">
+      <svg class="back__arrow" viewBox="0 0 19 9" fill="none" aria-hidden="true">
+        <path d="M18 4.5H1M1 4.5 4.6 1M1 4.5 4.6 8" stroke="currentColor" stroke-width="1.4"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back
+    </button>
+  </section>
+
+</div>
+
+<script src="js/loop.js"></script>
+<script src="js/cta.js"></script>
+<script>
+/* MILO shell state machine. Owner: CLAUDE.
+   screen1 -> (forward clip) -> screen2 -> (reverse clip) -> screen1
+   No DOM animation is bound to a video event anywhere in this file. Entrances key
+   off the .is-active class only, so the 8s hero loop cannot re-trigger them. */
+(function () {
+  'use strict';
+  var root    = document.documentElement;
+  var tv      = document.getElementById('tv');
+  var s1      = document.getElementById('screen1');
+  var s2      = document.getElementById('screen2');
+  var backBtn = document.getElementById('backBtn');
+  var logo    = document.getElementById('logo');
+
+  var FORWARD = 'assets/transition-forward.mp4';
+  var REVERSE = 'assets/transition-reverse.mp4';
+  var busy = false;
+
+  if (window.MiloLoop) {
+    window.MiloLoop.mount(document.getElementById('loopRoot'));
+    window.MiloLoop.start();
+  }
+  if (window.MiloCTA) {
+    window.MiloCTA.mount(document.getElementById('ctaRoot'));
+    window.MiloCTA.show();   // mounts hidden by design; screen 1 is live at boot
+  }
+
+  /* Defer the transition clips until the hero is up. Nobody can press GO FURTHER
+     in the first second, and the hero is the thing that must start instantly. */
+  function warmTransitions() {
+    tv.preload = 'auto';
+    [FORWARD, REVERSE].forEach(function (u) {
+      var l = document.createElement('link');
+      l.rel = 'prefetch';
+      l.as = 'video';
+      l.href = u;
+      document.head.appendChild(l);
+    });
+  }
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(warmTransitions, { timeout: 2500 });
+  } else {
+    setTimeout(warmTransitions, 1800);
+  }
+
+  function swapLogo(screen) {
+    /* Codex's brief said .svg, the delivered asset is .png. Try both extensions
+       instead of betting on one — a silent miss here means the cream-ground
+       screen keeps the dark-ground logo forever, with no error anywhere. */
+    var stem = screen === 2 ? 'assets/logo-cream' : 'assets/logo';
+    var exts = ['.png', '.svg'];
+    (function attempt(i) {
+      if (i >= exts.length) { return; }            // neither exists: keep what is showing
+      var probe = new Image();
+      probe.onload = function () { logo.src = stem + exts[i]; };
+      probe.onerror = function () { attempt(i + 1); };
+      probe.src = stem + exts[i];
+    })(0);
+  }
+
+  function play(src, poster, onDone) {
+    tv.poster = poster;
+    tv.src = src;
+    tv.classList.add('is-on');
+    tv.load();
+    var done = false;
+    function finish() {
+      if (done) { return; }
+      done = true;
+      tv.removeEventListener('ended', finish);
+      onDone();
+    }
+    tv.addEventListener('ended', finish);
+    var p = tv.play();
+    if (p && p.catch) {
+      p.catch(function () { finish(); });   // autoplay refused: never strand the user mid-transition
+    }
+  }
+
+  function goScreen2() {
+    if (busy || root.getAttribute('data-screen') === '2') { return; }
+    busy = true;
+    s1.classList.remove('is-active');
+    if (window.MiloCTA) { window.MiloCTA.hide(); }
+    play(FORWARD, 'assets/poster-forward.jpg', function () {
+      if (window.MiloLoop) { window.MiloLoop.stop(); }
+      root.setAttribute('data-screen', '2');
+      swapLogo(2);
+      s2.classList.add('is-active');
+      busy = false;
+    });
+  }
+
+  function goScreen1() {
+    if (busy || root.getAttribute('data-screen') === '1') { return; }
+    busy = true;
+    s2.classList.remove('is-active');
+    play(REVERSE, 'assets/poster-reverse.jpg', function () {
+      if (window.MiloLoop) { window.MiloLoop.start(); }
+      tv.classList.remove('is-on');
+      root.setAttribute('data-screen', '1');
+      swapLogo(1);
+      s1.classList.add('is-active');
+      if (window.MiloCTA) { window.MiloCTA.show(); }
+      busy = false;
+    });
+  }
+
+  /* Pause / resume the hero loop. Acts on the video elements directly so it
+     works whatever loop.js is doing internally. */
+  var pauseBtn = document.getElementById('pauseBtn');
+  var paused = false;
+  pauseBtn.addEventListener('click', function () {
+    paused = !paused;
+    var vids = document.getElementById('loopRoot').querySelectorAll('video');
+    Array.prototype.forEach.call(vids, function (v) { paused ? v.pause() : v.play().catch(function(){}); });
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+    pauseBtn.classList.toggle('is-paused', paused);
+    pauseBtn.querySelector('.pause__label').textContent = paused ? 'Resume motion' : 'Pause motion';
+  });
+
+  document.addEventListener('milo:go-further', goScreen2);
+  backBtn.addEventListener('click', goScreen1);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && root.getAttribute('data-screen') === '2') { goScreen1(); }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+# Render Blueprint — MILO "Energy That Runs"
+#
+# Static site. There is no build step: the page is plain HTML, CSS and vanilla JS,
+# so Render just serves the directory as-is.
+#
+# Deploy: Render Dashboard > New > Blueprint > point at this repo.
+
+services:
+  - type: web
+    name: milo-energy-that-runs
+    runtime: static
+    # Nothing to compile. Render requires the key, so make it explicit and honest.
+    buildCommand: "echo 'no build step — static assets served directly'"
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false
+
+    headers:
+      # Video and image assets are content-addressed by filename and only change
+      # when re-encoded, so cache them hard. This matters more than usual here:
+      # the payload is ~25 MB of MP4 and every repeat visit would otherwise
+      # re-download the hero loop.
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+      # The page itself must never be cached, or a redeploy leaves visitors on
+      # the old markup while the new assets 404.
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+
+      - path: /css/*
+        name: Cache-Control
+        value: public, max-age=3600
+
+      - path: /js/*
+        name: Cache-Control
+        value: public, max-age=3600
+
+      # Range requests are what let a browser seek and stream an MP4 instead of
+      # downloading it whole before playback. Render serves these by default;
+      # this header just makes the capability explicit to clients that check.
+      - path: /assets/*
+        name: Accept-Ranges
+        value: bytes
+
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
+    routes:
+      # Single page. Anything not found falls back to the page rather than a 404,
+      # so a stray path still lands the visitor on the site.
+      - type: rewrite
+        source: /*
+        destination: /index.html
