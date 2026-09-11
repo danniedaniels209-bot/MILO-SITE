@@ -130,23 +130,69 @@
     window.MiloCTA.show();   // mounts hidden by design; screen 1 is live at boot
   }
 
-  /* Defer the transition clips until the hero is up. Nobody can press GO FURTHER
-     in the first second, and the hero is the thing that must start instantly. */
+  /* ---------------------------------------------------------------------
+     Background prefetch of the two transition clips.
+
+     The previous version used <link rel="prefetch" as="video"> plus
+     preload='auto' on an element with no src. Neither did anything useful:
+     prefetch for video is low priority and routinely dropped, and preload
+     cannot act before a source exists. The download therefore started on
+     click, which is exactly the delay we are trying to remove.
+
+     This fetches the bytes into memory and hands the <video> a blob URL, so
+     playback starts from RAM. That also makes us independent of the CDN's
+     cache headers, which we cannot rely on.
+     --------------------------------------------------------------------- */
+  var cached = Object.create(null);   // network url -> object url
+
+  function warm(url) {
+    return fetch(url, { cache: 'force-cache' })
+      .then(function (r) {
+        if (!r.ok) { throw new Error('HTTP ' + r.status); }
+        return r.blob();
+      })
+      .then(function (blob) {
+        cached[url] = URL.createObjectURL(blob);
+        console.info('[milo] ready:', url, (blob.size / 1048576).toFixed(1) + ' MB');
+      })
+      .catch(function (e) {
+        // Non-fatal: play() falls back to the network URL and still works.
+        console.warn('[milo] prefetch failed for', url, '-', e.message);
+      });
+  }
+
+  /* Wait until the hero is actually playing before spending bandwidth on the
+     transitions, so they never compete with the thing on screen. Sequential,
+     not parallel: GO FURTHER is always needed before BACK. */
   function warmTransitions() {
-    tv.preload = 'auto';
-    [FORWARD, REVERSE].forEach(function (u) {
-      var l = document.createElement('link');
-      l.rel = 'prefetch';
-      l.as = 'video';
-      l.href = u;
-      document.head.appendChild(l);
+    warm(FORWARD).then(function () { return warm(REVERSE); });
+  }
+
+  function whenHeroPlaying(fn) {
+    var vids = document.getElementById('loopRoot').querySelectorAll('video');
+    var started = false;
+    function go() {
+      if (started) { return; }
+      started = true;
+      fn();
+    }
+    Array.prototype.forEach.call(vids, function (v) {
+      if (!v.paused && v.currentTime > 0) { go(); }
+      v.addEventListener('playing', go, { once: true });
     });
+    setTimeout(go, 4000);   // hero stalled or blocked? warm anyway
   }
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(warmTransitions, { timeout: 2500 });
-  } else {
-    setTimeout(warmTransitions, 1800);
-  }
+  whenHeroPlaying(function () {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(warmTransitions, { timeout: 2000 });
+    } else {
+      setTimeout(warmTransitions, 300);
+    }
+  });
+
+  window.addEventListener('pagehide', function () {
+    Object.keys(cached).forEach(function (k) { URL.revokeObjectURL(cached[k]); });
+  });
 
   function swapLogo(screen) {
     /* Codex's brief said .svg, the delivered asset is .png. Try both extensions
@@ -165,7 +211,8 @@
 
   function play(src, poster, onDone) {
     tv.poster = poster;
-    tv.src = src;
+    // prefetched copy if it landed, otherwise straight from the network
+    tv.src = cached[src] || src;
     tv.classList.add('is-on');
     tv.load();
     var done = false;
